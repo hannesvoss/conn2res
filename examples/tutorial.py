@@ -11,7 +11,6 @@ import os
 import numpy as np
 import pandas as pd
 from sklearn.base import is_classifier
-from conn2res.tasks import NeuroGymTask
 from conn2res.connectivity import Conn
 from conn2res.reservoir import EchoStateNetwork
 from conn2res.readout import Readout

@@ -123,6 +123,3 @@ htmlhelp_basename = 'conn2resdoc'
 #     'thumbnail_size': (250, 250),
 #     'ignore_pattern': r'/wip.*\.py',
 # }
-
-# -- Other -------------------------------------------------
-autodoc_mock_imports = ["neurogym"]

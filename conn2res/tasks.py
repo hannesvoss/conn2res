@@ -4,43 +4,8 @@ Functionality for fetching task datasets
 """
 from abc import ABCMeta, abstractmethod
 import numpy as np
-import neurogym as ngym
 from reservoirpy import datasets
 
-
-NEUROGYM_TASKS = [
-    'AntiReach',
-    # 'Bandit',  # *
-    'ContextDecisionMaking',
-    # 'DawTwoStep',  # *
-    'DelayComparison',
-    'DelayMatchCategory',
-    'DelayMatchSample',
-    'DelayMatchSampleDistractor1D',
-    'DelayPairedAssociation',
-    # 'Detection',  # *
-    'DualDelayMatchSample',
-    # 'EconomicDecisionMaking',  # *
-    'GoNogo',
-    'HierarchicalReasoning',
-    'IntervalDiscrimination',
-    'MotorTiming',
-    'MultiSensoryIntegration',
-    # 'Null',
-    'OneTwoThreeGo',
-    'PerceptualDecisionMaking',
-    'PerceptualDecisionMakingDelayResponse',
-    'PostDecisionWager',
-    'ProbabilisticReasoning',
-    'PulseDecisionMaking',
-    'Reaching1D',
-    'Reaching1DWithSelfDistraction',
-    'ReachingDelayResponse',
-    'ReadySetGo',
-    'SingleContextDecisionMaking',
-    'SpatialSuppressMotion',
-    # 'ToneDetection'  # *
-]
 
 RESERVOIRPY_TASKS = [
     'henon_map',
@@ -97,110 +62,6 @@ class Task(metaclass=ABCMeta):
         pass
 
 
-class NeuroGymTask(Task):
-    """
-    Class for generating task datasets from the
-    Neurogym repository
-
-    Parameters
-    ----------
-    name : str
-        name of the task
-    n_trials : int, optional
-        number of trials if task indicated by 'name' is a
-        a trial-based task, by default 10
-    """
-
-    def __init__(self, *args, **kwargs):
-        """
-            Constructor method for class NeuroGymTask
-        """
-        super().__init__(*args, **kwargs)
-        self.timing = None
-
-    @property
-    def name(self):
-        return self._name
-
-    @name.setter
-    def name(self, name):
-        if name not in NEUROGYM_TASKS:
-            raise ValueError("Task not included in NeuroGym tasks")
-
-        self._name = name
-
-    def fetch_data(self, n_trials=None, input_gain=None, add_bias=False,
-                   **kwargs):
-        """
-        Fetch data for Neurogym tasks
-
-        Parameters
-        ----------
-        n_trials : int, optional
-            number of trials to be generated, by default None
-        input_gain : float, optional
-            gain on the input signal, i.e., scalar multiplier, by default None
-        add_bias : bool, optional
-            decides whether bias is added to the input signal or not,
-            by default False
-
-        Returns
-        -------
-        x, y : numpy.ndarray, list
-            input (x) and output (y) training data
-        """
-        if n_trials is not None:
-            self.n_trials = n_trials
-
-        # create a Dataset object from NeuroGym
-        dataset = ngym.Dataset(self._name + '-v0', kwargs)
-
-        # get environment object
-        env = dataset.env
-
-        # generate per trial dataset
-        _ = env.reset()
-
-        x, y = [], []
-        for _ in range(self.n_trials):
-            env.new_trial()
-            ob, gt = env.ob, env.gt
-
-            # reshape data if needed
-            if ob.ndim == 1:
-                ob = ob[:, np.newaxis]
-            if gt.ndim == 1:
-                gt = gt[:, np.newaxis]
-
-            # scale input data
-            if input_gain is not None:
-                ob *= input_gain
-
-            # add bias to input data if needed
-            if add_bias:
-                ob = np.hstack((np.ones((n_trials, 1)), ob))
-
-            # store input and output
-            x.append(ob)
-            y.append(gt)
-
-        # set attributes
-        if x[0].squeeze().ndim == 1:
-            self.n_features = 1
-        elif x[0].squeeze().ndim == 2:
-            self.n_features = x[0].shape[1]
-
-        if y[0].squeeze().ndim == 1:
-            self.n_targets = 1
-        elif y[0].squeeze().ndim == 2:
-            self.n_targets = y[0].shape[1]
-
-        self.timing = env.timing
-        # self._data = {'x': x, 'y': y}
-
-        return x, y
-
-
 class ReservoirPyTask(Task):
     """
     Class for generating task datasets from the
@@ -217,7 +78,7 @@ class ReservoirPyTask(Task):
 
     def __init__(self, *args, **kwargs):
         """
-            Constructor method for class NeuroGymTask
+            Constructor method for class ReservoirPyTask
         """
         super().__init__(*args, **kwargs)
         self.horizon = None
@@ -484,9 +345,7 @@ def get_task_list(repository):
         _description_
     """
     repository = repository.lower()
-    if repository == 'neurogym':
-        return NEUROGYM_TASKS
-    elif repository == 'reservoirpy':
+    if repository == 'reservoirpy':
         return RESERVOIRPY_TASKS
     elif repository == 'conn2res':
         return CONN2RES_TASKS
